@@ -1,5 +1,7 @@
+import 'package:final_project_ppb/components/custom_textfield.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -51,44 +53,109 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login'), centerTitle: true),
+      appBar: AppBar(
+        title: Text(
+          'Login',
+          style: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: const Color(0xFFFEF7E4),
+      ),
+      backgroundColor: const Color(0xFFFEF7E4),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Center(
           child: ListView(
             children: [
               const SizedBox(height: 48),
-              Icon(Icons.lock_outline, size: 100, color: Colors.blue[200]),
-              const SizedBox(height: 48),
-              TextField(
+              Image(
+                image: AssetImage('lib/assets/logo.png'),
+                width: 200,
+                height: 200,
+              ),
+              const SizedBox(height: 12),
+              CustomTextField(
                 controller: _emailController,
-                decoration: const InputDecoration(label: Text('Email')),
+                labelText: 'Email',
+                exampleText: 'abecede@gmail.com',
+                validator: (email) {
+                  if (email == null || email.isEmpty) {
+                    return 'Email tidak boleh kosong';
+                  }
+                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
+                    return 'Format email tidak valid';
+                  }
+                  return null;
+                },
               ),
-              TextField(
+              CustomTextField(
                 controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(label: Text('Password')),
+                labelText: 'Password',
+                exampleText: 'keledaI12@',
+                validator: (password) {
+                  if (password == null || password.isEmpty) {
+                    return 'Password tidak boleh kosong';
+                  }
+                  if (password.length < 6) {
+                    return 'Password harus minimal 6 karakter';
+                  }
+                  return null;
+                },
+                isPassword: true,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
               _errorCode != ""
                   ? Column(
-                    children: [Text(_errorCode), const SizedBox(height: 24)],
+                    children: [
+                      Text(_errorCode, style: GoogleFonts.montserrat()),
+                      const SizedBox(height: 24),
+                    ],
                   )
                   : const SizedBox(height: 0),
               OutlinedButton(
                 onPressed: signIn,
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8B4513),
+                  foregroundColor: Colors.white,
+                  side: BorderSide.none,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12.0,
+                    horizontal: 24.0,
+                  ), // Add padding
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                ),
                 child:
                     _isLoading
-                        ? const CircularProgressIndicator()
-                        : const Text('Login'),
+                        ? const CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        )
+                        : Text(
+                          'Login',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Don\'t have an account?'),
+                  Text(
+                    'Belum mempunyai akun?',
+                    style: GoogleFonts.montserrat(),
+                  ),
                   TextButton(
                     onPressed: navigateRegister,
-                    child: const Text('Register'),
+                    child: Text(
+                      'Register di sini',
+                      style: GoogleFonts.montserrat(
+                        color: const Color(0xFF8B4513),
+                      ),
+                    ),
                   ),
                 ],
               ),
