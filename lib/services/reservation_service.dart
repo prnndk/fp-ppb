@@ -53,17 +53,6 @@ class ReservationService {
     }
   }
 
-  // Update reservation status (kalo butuh nanti)
-  Future<void> updateReservationStatus(String id, String status) async {
-    try {
-      await _firestore.collection(_collection).doc(id).update({
-        'status': status,
-      });
-    } catch (e) {
-      throw Exception('Failed to update reservation: $e');
-    }
-  }
-
   // GET ALL RESERVATION
   Future<List<Reservation>> getAllReservations() async {
     try {

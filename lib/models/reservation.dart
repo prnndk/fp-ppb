@@ -8,7 +8,6 @@ class Reservation {
   final List<OrderItem> orderItems;
   final double totalAmount;
   final DateTime createdAt;
-  final String status; // pending, confirmed, completed, cancelled
 
   Reservation({
     this.id,
@@ -18,7 +17,6 @@ class Reservation {
     required this.orderItems,
     required this.totalAmount,
     required this.createdAt,
-    this.status = 'pending',
   });
 
   Map<String, dynamic> toMap() {
@@ -29,7 +27,6 @@ class Reservation {
       'orderItems': orderItems.map((item) => item.toMap()).toList(),
       'totalAmount': totalAmount,
       'createdAt': Timestamp.fromDate(createdAt),
-      'status': status,
     };
   }
 
@@ -46,7 +43,6 @@ class Reservation {
           [],
       totalAmount: (map['totalAmount'] ?? 0.0).toDouble(),
       createdAt: (map['createdAt'] as Timestamp).toDate(),
-      status: map['status'] ?? 'pending',
     );
   }
 }

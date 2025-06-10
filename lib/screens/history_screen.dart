@@ -159,7 +159,6 @@ class _HistoryPageState extends State<HistoryPage> {
                     orderItems: reservation.orderItems,
                     totalAmount: reservation.totalAmount,
                     createdAt: reservation.createdAt,
-                    status: reservation.status,
                   );
 
                   // Update reservasi
@@ -387,18 +386,6 @@ class _HistoryPageState extends State<HistoryPage> {
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8,
                                   vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _getStatusColor(reservation.status),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  _getStatusText(reservation.status),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                  ),
                                 ),
                               ),
                             ],
