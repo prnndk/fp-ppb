@@ -17,7 +17,7 @@ class ReservationService {
     }
   }
 
-  // Get reservation by ID
+  // GET RESERVATION
   Future<Reservation?> getReservation(String id) async {
     try {
       DocumentSnapshot doc =
@@ -32,7 +32,28 @@ class ReservationService {
     }
   }
 
-  // Update reservation status
+  // DELETE RESERVASI
+  Future<void> deleteReservation(String id) async {
+    try {
+      await _firestore.collection(_collection).doc(id).delete();
+    } catch (e) {
+      throw Exception('Failed to delete reservation: $e');
+    }
+  }
+
+  // UPDATE RESERVASI
+  Future<void> updateReservation(Reservation reservation) async {
+    try {
+      await _firestore
+          .collection('reservations')
+          .doc(reservation.id)
+          .update(reservation.toMap());
+    } catch (e) {
+      throw Exception('Failed to update reservation: $e');
+    }
+  }
+
+  // Update reservation status (kalo butuh nanti)
   Future<void> updateReservationStatus(String id, String status) async {
     try {
       await _firestore.collection(_collection).doc(id).update({
@@ -43,17 +64,19 @@ class ReservationService {
     }
   }
 
-  // Get all reservations (for admin purposes)
-  Stream<List<Reservation>> getAllReservations() {
-    return _firestore
-        .collection(_collection)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map(
-          (snapshot) =>
-              snapshot.docs
-                  .map((doc) => Reservation.fromMap(doc.data(), doc.id))
-                  .toList(),
-        );
+  // GET ALL RESERVATION
+  Future<List<Reservation>> getAllReservations() async {
+    try {
+      QuerySnapshot querySnapshot =
+          await _firestore.collection(_collection).get();
+      return querySnapshot.docs
+          .map(
+            (doc) =>
+                Reservation.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+          )
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch reservations: $e');
+    }
   }
 }

@@ -24,6 +24,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
   bool _isLoading = false;
   late Reservation _currentReservation;
 
+  // COPY DARI RESERVASI
   @override
   void initState() {
     super.initState();
@@ -645,7 +646,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Confirm button
+                    // KONFIRMASI DAN KIRIM KE FIRESTORE
                     CustomButton(
                       text:
                           _isLoading ? 'Processing...' : 'Confirm Reservation',
