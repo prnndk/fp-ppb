@@ -22,6 +22,7 @@ class _ReservationPageState extends State<ReservationPage> {
   TimeOfDay? _selectedTime;
   String _timeDisplayText = '';
 
+  //STATIC DATA
   final List<MenuItem> menuItems = [
     MenuItem(
       id: '1',
@@ -53,6 +54,7 @@ class _ReservationPageState extends State<ReservationPage> {
     });
   }
 
+  // DATE PICKER
   Future<void> _selectDateTime() async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -104,6 +106,7 @@ class _ReservationPageState extends State<ReservationPage> {
     }
   }
 
+  // CHAT ACTION SHEET
   void _showChatActionSheet() {
     showModalBottomSheet(
       context: context,
@@ -188,6 +191,7 @@ class _ReservationPageState extends State<ReservationPage> {
     );
   }
 
+  // KONFIRMASI PESANAN HANDLING
   void _proceedToConfirmation() {
     if (_selectedDate == null || _selectedTime == null) {
       _showErrorSnackBar('Pilih waktu reservasi terlebih dahulu');
@@ -242,6 +246,7 @@ class _ReservationPageState extends State<ReservationPage> {
       createdAt: DateTime.now(),
     );
 
+    // KIRIM KE ORDER KONFIRMASI
     Navigator.push(
       context,
       MaterialPageRoute(
