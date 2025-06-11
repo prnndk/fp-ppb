@@ -1,6 +1,6 @@
 import 'package:final_project_ppb/screens/auth/login.dart';
 import 'package:final_project_ppb/screens/account_screen.dart';
-import 'package:final_project_ppb/screens/history_screen.dart';
+import 'package:final_project_ppb/screens/history/history_screen.dart';
 import 'package:final_project_ppb/screens/reservation_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
