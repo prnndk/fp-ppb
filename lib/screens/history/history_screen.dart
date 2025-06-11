@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:final_project_ppb/models/reservation.dart';
 import 'package:final_project_ppb/services/reservation_service.dart';
+import 'package:final_project_ppb/screens/history/transaction_detail_screen.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({Key? key}) : super(key: key);
@@ -203,36 +204,6 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'confirmed':
-        return Colors.green;
-      case 'pending':
-        return Colors.orange;
-      case 'completed':
-        return Colors.blue;
-      case 'cancelled':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  String _getStatusText(String status) {
-    switch (status.toLowerCase()) {
-      case 'confirmed':
-        return 'Dikonfirmasi';
-      case 'pending':
-        return 'Menunggu';
-      case 'completed':
-        return 'Selesai';
-      case 'cancelled':
-        return 'Dibatalkan';
-      default:
-        return status;
-    }
-  }
-
   Widget _buildOrderItemsList(List<OrderItem> orderItems) {
     if (orderItems.isEmpty) {
       return const Text(
@@ -257,7 +228,7 @@ class _HistoryPageState extends State<HistoryPage> {
           (item) => Padding(
             padding: const EdgeInsets.only(bottom: 2),
             child: Text(
-              '• ${item.menuName} x${item.quantity} - \$${item.totalPrice.toStringAsFixed(2)}',
+              '• ${item.menuName} x${item.quantity} - Rp${item.totalPrice.toStringAsFixed(0)}',
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ),
@@ -343,7 +314,6 @@ class _HistoryPageState extends State<HistoryPage> {
             );
           } else {
             final reservations = snapshot.data!;
-            // Sort reservasi
             reservations.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
             return RefreshIndicator(
@@ -358,145 +328,159 @@ class _HistoryPageState extends State<HistoryPage> {
                 itemCount: reservations.length,
                 itemBuilder: (context, index) {
                   final reservation = reservations[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 16.0),
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header with status
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Reservasi #${reservation.id?.substring(0, 8).toUpperCase() ?? "Unknown"}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Color(0xFF643F04),
-                                  fontFamily: 'Montserrat',
-                                ),
+                  return InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => DetailTransactionScreen(
+                                reservation: reservation,
                               ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
+                        ),
+                      );
+                    },
+                    child: Card(
+                      margin: const EdgeInsets.only(bottom: 16.0),
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Header with status
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Reservasi #${reservation.id?.substring(0, 8).toUpperCase() ?? "Unknown"}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: Color(0xFF643F04),
+                                    fontFamily: 'Montserrat',
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
 
-                          // detail rservasi
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.calendar_today,
-                                size: 16,
-                                color: Color(0xFF8B4513),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '${reservation.reservationDate.day}/${reservation.reservationDate.month}/${reservation.reservationDate.year}',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontFamily: 'Montserrat',
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              const Icon(
-                                Icons.access_time,
-                                size: 16,
-                                color: Color(0xFF8B4513),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                reservation.reservationTime,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontFamily: 'Montserrat',
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.people,
-                                size: 16,
-                                color: Color(0xFF8B4513),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '${reservation.numberOfGuests} tamu',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontFamily: 'Montserrat',
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                'Total: \$${reservation.totalAmount.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF8B4513),
-                                  fontFamily: 'Montserrat',
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Order items
-                          _buildOrderItemsList(reservation.orderItems),
-                          const SizedBox(height: 12),
-
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              TextButton.icon(
-                                onPressed: () => _editReservation(reservation),
-                                icon: const Icon(
-                                  Icons.edit,
+                            // detail reservasi
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.calendar_today,
                                   size: 16,
                                   color: Color(0xFF8B4513),
                                 ),
-                                label: const Text(
-                                  'Edit',
-                                  style: TextStyle(
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${reservation.reservationDate.day}/${reservation.reservationDate.month}/${reservation.reservationDate.year}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontFamily: 'Montserrat',
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                const Icon(
+                                  Icons.access_time,
+                                  size: 16,
+                                  color: Color(0xFF8B4513),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  reservation.reservationTime,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontFamily: 'Montserrat',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.people,
+                                  size: 16,
+                                  color: Color(0xFF8B4513),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${reservation.numberOfGuests} tamu',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontFamily: 'Montserrat',
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  'Total: Rp${reservation.totalAmount.toStringAsFixed(0)}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
                                     color: Color(0xFF8B4513),
-                                    fontSize: 12,
+                                    fontFamily: 'Montserrat',
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              TextButton.icon(
-                                onPressed:
-                                    () => _deleteReservation(reservation.id!),
-                                icon: const Icon(
-                                  Icons.delete,
-                                  size: 16,
-                                  color: Colors.red,
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Order items
+                            _buildOrderItemsList(reservation.orderItems),
+                            const SizedBox(height: 12),
+
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                TextButton.icon(
+                                  onPressed:
+                                      () => _editReservation(reservation),
+                                  icon: const Icon(
+                                    Icons.edit,
+                                    size: 16,
+                                    color: Color(0xFF8B4513),
+                                  ),
+                                  label: const Text(
+                                    'Edit',
+                                    style: TextStyle(
+                                      color: Color(0xFF8B4513),
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                 ),
-                                label: const Text(
-                                  'Hapus',
-                                  style: TextStyle(
+                                const SizedBox(width: 8),
+                                TextButton.icon(
+                                  onPressed:
+                                      () => _deleteReservation(reservation.id!),
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    size: 16,
                                     color: Colors.red,
-                                    fontSize: 12,
+                                  ),
+                                  label: const Text(
+                                    'Hapus',
+                                    style: TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
