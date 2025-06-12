@@ -3,6 +3,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:final_project_ppb/models/reservation.dart';
 import 'package:final_project_ppb/models/review.dart';
 import 'package:final_project_ppb/services/review_service.dart';
+import 'package:final_project_ppb/components/custom_button.dart';
 
 class DetailTransactionScreen extends StatelessWidget {
   final Reservation reservation;
@@ -14,153 +15,262 @@ class DetailTransactionScreen extends StatelessWidget {
     final reviewService = ReviewService();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Detail Reservasi',
-          style: TextStyle(color: Color(0xFF4A2C2A)),
-        ),
-        backgroundColor: const Color(0xFFF8F5F2),
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFF4A2C2A)),
-      ),
-      backgroundColor: const Color(0xFFF8F5F2),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            Text(
-              'Reservasi #${reservation.id?.substring(0, 8).toUpperCase() ?? "Unknown"}',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: Color(0xFF4A2C2A),
+      backgroundColor: const Color(0xFFFFFAEE),
+      body: Column(
+        children: [
+          // Banner Section
+          Container(
+            height: 197,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('lib/assets/images/review.jpg'),
+                fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(height: 16),
-            ...reservation.orderItems.map(
-              (item) => Card(
-                margin: const EdgeInsets.only(bottom: 12),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF8B4513).withOpacity(0.7),
+                    const Color(0xFF8B4513).withOpacity(0.5),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+              child: SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        '${item.menuName} x${item.quantity}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      // Back Button
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: const Icon(
+                              Icons.arrow_back_ios,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Riwayat',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      // Title
+                      const Text(
+                        'Detail Reservasi',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
                       ),
                       const SizedBox(height: 4),
-                      Text('Rp${item.totalPrice.toStringAsFixed(0)}'),
-                      const SizedBox(height: 8),
-                      StreamBuilder<Review?>(
-                        stream: reviewService.getUserReviewForMenuItem(
-                          menuId: item.menuId,
-                          reservationId: reservation.id!,
+                      const Text(
+                        'Lihat detail & review pesananmu',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 16,
+                          color: Colors.white70,
+                          fontWeight: FontWeight.w400,
                         ),
-                        builder: (context, snapshot) {
-                          final review = snapshot.data;
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const SizedBox(
-                              height: 24,
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            );
-                          }
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (review != null) ...[
-                                Row(
-                                  children: [
-                                    RatingBarIndicator(
-                                      rating: review.rating.toDouble(),
-                                      itemBuilder:
-                                          (context, _) => const Icon(
-                                            Icons.star,
-                                            color: Colors.amber,
-                                          ),
-                                      itemCount: 5,
-                                      itemSize: 20.0,
-                                      direction: Axis.horizontal,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '(${review.rating.toDouble()}/5)',
-                                      style: const TextStyle(
-                                        color: Color(0xFFBCAAA4),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  review.comment,
-                                  style: const TextStyle(fontSize: 13),
-                                ),
-                                Row(
-                                  children: [
-                                    TextButton(
-                                      onPressed:
-                                          () => _showReviewDialog(
-                                            context,
-                                            item,
-                                            review,
-                                            reviewService,
-                                            reservation,
-                                          ),
-                                      child: const Text(
-                                        'Edit',
-                                        style: TextStyle(color: Colors.orange),
-                                      ),
-                                    ),
-                                    TextButton(
-                                      onPressed: () async {
-                                        await reviewService.deleteReview(
-                                          reviewId: review.id,
-                                        );
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Review dihapus'),
-                                          ),
-                                        );
-                                      },
-                                      child: const Text(
-                                        'Hapus',
-                                        style: TextStyle(color: Colors.red),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ] else ...[
-                                ElevatedButton(
-                                  onPressed:
-                                      () => _showReviewDialog(
-                                        context,
-                                        item,
-                                        null,
-                                        reviewService,
-                                        reservation,
-                                      ),
-                                  child: const Text('Tambah Review'),
-                                ),
-                              ],
-                            ],
-                          );
-                        },
                       ),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+          // Content Section with Curved Top Border
+          Expanded(
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFFFFFAEE),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
+                ),
+              ),
+              transform: Matrix4.translationValues(0, -20, 0),
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 30, 16, 16),
+                children: [
+                  Text(
+                    'Reservasi #${reservation.id?.substring(0, 8).toUpperCase() ?? "Unknown"}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Color(0xFF4A2C2A),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ...reservation.orderItems.map(
+                    (item) => Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${item.menuName} x${item.quantity}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text('Rp${item.totalPrice.toStringAsFixed(0)}'),
+                            const SizedBox(height: 8),
+                            StreamBuilder<Review?>(
+                              stream: reviewService.getUserReviewForMenuItem(
+                                menuId: item.menuId,
+                                reservationId: reservation.id!,
+                              ),
+                              builder: (context, snapshot) {
+                                final review = snapshot.data;
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const SizedBox(
+                                    height: 24,
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (review != null) ...[
+                                      Row(
+                                        children: [
+                                          RatingBarIndicator(
+                                            rating: review.rating.toDouble(),
+                                            itemBuilder:
+                                                (context, _) => const Icon(
+                                                  Icons.star,
+                                                  color: Colors.amber,
+                                                ),
+                                            itemCount: 5,
+                                            itemSize: 20.0,
+                                            direction: Axis.horizontal,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            '(${review.rating.toDouble()}/5)',
+                                            style: const TextStyle(
+                                              color: Color(0xFFBCAAA4),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        review.comment,
+                                        style: const TextStyle(fontSize: 13),
+                                      ),
+                                      Row(
+                                        children: [
+                                          CustomButton(
+                                            text: 'Edit',
+                                            onPressed:
+                                                () => _showReviewDialog(
+                                                  context,
+                                                  item,
+                                                  review,
+                                                  reviewService,
+                                                  reservation,
+                                                ),
+                                            backgroundColor: Colors.orange,
+                                            textColor: Colors.white,
+                                            width: 80,
+                                            height: 36,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 0,
+                                              vertical: 0,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          CustomButton(
+                                            text: 'Hapus',
+                                            onPressed: () async {
+                                              await reviewService.deleteReview(
+                                                reviewId: review.id,
+                                              );
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    'Review dihapus',
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                            backgroundColor: Colors.red,
+                                            textColor: Colors.white,
+                                            width: 80,
+                                            height: 36,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 0,
+                                              vertical: 0,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ] else ...[
+                                      CustomButton(
+                                        text: 'Tambah Review',
+                                        onPressed:
+                                            () => _showReviewDialog(
+                                              context,
+                                              item,
+                                              null,
+                                              reviewService,
+                                              reservation,
+                                            ),
+                                        backgroundColor: const Color(
+                                          0xFF8B4513,
+                                        ),
+                                        textColor: Colors.white,
+                                        width: 140,
+                                        height: 36,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 0,
+                                          vertical: 0,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -211,7 +321,8 @@ class DetailTransactionScreen extends StatelessWidget {
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Batal'),
               ),
-              ElevatedButton(
+              CustomButton(
+                text: review == null ? 'Simpan' : 'Update',
                 onPressed: () async {
                   if (ratingController.value == 0) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -238,7 +349,11 @@ class DetailTransactionScreen extends StatelessWidget {
                   // ignore: use_build_context_synchronously
                   Navigator.pop(context);
                 },
-                child: Text(review == null ? 'Simpan' : 'Update'),
+                backgroundColor: const Color(0xFF8B4513),
+                textColor: Colors.white,
+                width: 100,
+                height: 40,
+                padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
               ),
             ],
           ),
