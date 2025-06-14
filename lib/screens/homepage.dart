@@ -1,5 +1,6 @@
 import 'package:final_project_ppb/screens/auth/login.dart';
 import 'package:final_project_ppb/screens/account_screen.dart';
+import 'package:final_project_ppb/screens/preferences/user_preference_screen.dart';
 import 'package:final_project_ppb/screens/reservation_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +27,11 @@ class _HomeScreenState extends State<HomeScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const ReservationPage()),
+      );
+    } else if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const UserPreferenceScreen()),
       );
     } else {
       setState(() {
