@@ -138,8 +138,7 @@ class DetailTransactionScreen extends StatelessWidget {
                             const SizedBox(height: 8),
                             StreamBuilder<Review?>(
                               stream: reviewService.getUserReviewForMenuItem(
-                                menuId: item.menuId,
-                                reservationId: reservation.id!,
+                                menuId: item.menuId.toString(),
                               ),
                               builder: (context, snapshot) {
                                 final review = snapshot.data;
@@ -195,9 +194,8 @@ class DetailTransactionScreen extends StatelessWidget {
                                                   item,
                                                   review,
                                                   reviewService,
-                                                  reservation,
                                                 ),
-                                            backgroundColor: Colors.orange,
+                                            backgroundColor: Color(0xFF8B4513),
                                             textColor: Colors.white,
                                             width: 80,
                                             height: 36,
@@ -243,7 +241,6 @@ class DetailTransactionScreen extends StatelessWidget {
                                               item,
                                               null,
                                               reviewService,
-                                              reservation,
                                             ),
                                         backgroundColor: const Color(
                                           0xFF8B4513,
@@ -280,7 +277,6 @@ class DetailTransactionScreen extends StatelessWidget {
     OrderItem item,
     Review? review,
     ReviewService reviewService,
-    Reservation reservation,
   ) {
     final ratingController = ValueNotifier<double>(
       review?.rating.toDouble() ?? 0.0,
@@ -294,27 +290,29 @@ class DetailTransactionScreen extends StatelessWidget {
       builder:
           (context) => AlertDialog(
             title: Text(review == null ? 'Tambah Review' : 'Edit Review'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                RatingBar.builder(
-                  initialRating: ratingController.value,
-                  minRating: 1,
-                  direction: Axis.horizontal,
-                  allowHalfRating: false,
-                  itemCount: 5,
-                  itemBuilder:
-                      (context, _) =>
-                          const Icon(Icons.star, color: Colors.amber),
-                  onRatingUpdate: (rating) => ratingController.value = rating,
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: commentController,
-                  decoration: const InputDecoration(labelText: 'Komentar'),
-                  maxLines: 2,
-                ),
-              ],
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RatingBar.builder(
+                    initialRating: ratingController.value,
+                    minRating: 1,
+                    direction: Axis.horizontal,
+                    allowHalfRating: false,
+                    itemCount: 5,
+                    itemBuilder:
+                        (context, _) =>
+                            const Icon(Icons.star, color: Color(0xFF8B4513)),
+                    onRatingUpdate: (rating) => ratingController.value = rating,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: commentController,
+                    decoration: const InputDecoration(labelText: 'Komentar'),
+                    maxLines: 2,
+                  ),
+                ],
+              ),
             ),
             actions: [
               TextButton(
@@ -332,22 +330,27 @@ class DetailTransactionScreen extends StatelessWidget {
                     );
                     return;
                   }
-                  if (review == null) {
-                    await reviewService.addReview(
-                      menuId: item.menuId,
-                      reservationId: reservation.id!,
-                      rating: ratingController.value.toInt(),
-                      comment: commentController.text,
-                    );
-                  } else {
-                    await reviewService.updateReview(
-                      reviewId: review.id,
-                      rating: ratingController.value.toInt(),
-                      comment: commentController.text,
-                    );
+                  try {
+                    if (review == null) {
+                      await reviewService.addReview(
+                        menuId: item.menuId.toString(),
+                        rating: ratingController.value.toInt(),
+                        comment: commentController.text,
+                      );
+                    } else {
+                      await reviewService.updateReview(
+                        reviewId: review.id,
+                        rating: ratingController.value.toInt(),
+                        comment: commentController.text,
+                      );
+                    }
+                    // ignore: use_build_context_synchronously
+                    Navigator.pop(context);
+                  } catch (e) {
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(e.toString())));
                   }
-                  // ignore: use_build_context_synchronously
-                  Navigator.pop(context);
                 },
                 backgroundColor: const Color(0xFF8B4513),
                 textColor: Colors.white,

@@ -6,18 +6,14 @@ class ReviewService {
   final _firestore = FirebaseFirestore.instance;
   final _collection = 'reviews';
 
-  // Get review for a menu item by current user and reservation
-  Stream<Review?> getUserReviewForMenuItem({
-    required String menuId,
-    required String reservationId,
-  }) {
+  // Get review for a menu item by current user (1 user 1 menu 1 review)
+  Stream<Review?> getUserReviewForMenuItem({required String menuId}) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return const Stream.empty();
 
     return _firestore
         .collection(_collection)
         .where('menuId', isEqualTo: menuId)
-        .where('reservationId', isEqualTo: reservationId)
         .where('userId', isEqualTo: user.uid)
         .limit(1)
         .snapshots()
@@ -27,18 +23,27 @@ class ReviewService {
         });
   }
 
-  // Add review
+  // Add review (only if not exists)
   Future<void> addReview({
     required String menuId,
-    required String reservationId,
     required int rating,
     required String comment,
   }) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception('User not logged in');
+    // Check if review already exists
+    final existing =
+        await _firestore
+            .collection(_collection)
+            .where('menuId', isEqualTo: menuId)
+            .where('userId', isEqualTo: user.uid)
+            .limit(1)
+            .get();
+    if (existing.docs.isNotEmpty) {
+      throw Exception('Anda sudah memberi review untuk menu ini.');
+    }
     await _firestore.collection(_collection).add({
       'menuId': menuId,
-      'reservationId': reservationId,
       'userId': user.uid,
       'rating': rating,
       'comment': comment,

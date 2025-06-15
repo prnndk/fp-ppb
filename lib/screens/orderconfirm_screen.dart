@@ -24,7 +24,6 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
   bool _isLoading = false;
   late Reservation _currentReservation;
 
-  // COPY DARI RESERVASI
   @override
   void initState() {
     super.initState();
@@ -52,9 +51,6 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
         if (newQuantity <= 0) {
           _currentReservation.orderItems.removeAt(index);
         } else {
-          final menuItem = widget.menuItems.firstWhere(
-            (item) => item.id == orderItem.menuId,
-          );
           _currentReservation.orderItems[index] = OrderItem(
             menuId: orderItem.menuId,
             menuName: orderItem.menuName,
@@ -63,8 +59,6 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
             totalPrice: orderItem.price * newQuantity,
           );
         }
-
-        // Recalculate total amount
         _recalculateTotal();
       }
     });
@@ -75,7 +69,6 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       _currentReservation.orderItems.removeWhere(
         (item) => item.menuId == orderItem.menuId,
       );
-
       _recalculateTotal();
     });
   }
@@ -93,6 +86,12 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
       totalAmount: newTotal,
       createdAt: _currentReservation.createdAt,
     );
+  }
+
+  // rupiah
+  String _formatPrice(double price) {
+    double rupiahPrice = price * 100;
+    return 'Rp ${rupiahPrice.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
   }
 
   Future<void> _confirmReservation() async {
@@ -186,14 +185,12 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Calculate total amount from current reservation
     double totalAmount = _currentReservation.totalAmount;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFAEE),
       body: Column(
         children: [
-          // Banner Section with Image and Overlay
           Container(
             height: 197,
             width: double.infinity,
@@ -297,6 +294,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                     ),
                     const SizedBox(height: 16),
 
+                    // reservation detail
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
@@ -385,7 +383,6 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Order items
                     const Text(
                       'Order Items',
                       style: TextStyle(
@@ -397,7 +394,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // message no items
+                    // if no items
                     if (_currentReservation.orderItems.isEmpty)
                       Container(
                         width: double.infinity,
@@ -427,7 +424,25 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                         ),
                       )
                     else
+                      // Order items list
                       ..._currentReservation.orderItems.map((orderItem) {
+                        MenuItem? menuItem;
+                        try {
+                          menuItem = widget.menuItems.firstWhere(
+                            (item) => item.id == orderItem.menuId,
+                          );
+                        } catch (e) {
+                          // Menu item not found, use placeholder
+                          const Text(
+                            'Makanan nyam',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 14,
+                              color: Colors.grey,
+                            ),
+                          );
+                        }
+
                         return Container(
                           margin: const EdgeInsets.only(bottom: 16),
                           padding: const EdgeInsets.all(16),
@@ -444,7 +459,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                           ),
                           child: Row(
                             children: [
-                              // Menu image placeholder
+                              // Menu image
                               Container(
                                 width: 60,
                                 height: 60,
@@ -452,12 +467,35 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                                   borderRadius: BorderRadius.circular(8),
                                   color: Colors.grey[300],
                                 ),
-                                child: const Icon(
-                                  Icons.fastfood,
-                                  color: Color(0xFF8B4513),
-                                ),
+                                child:
+                                    menuItem != null
+                                        ? ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          child: Image.network(
+                                            menuItem.imageUrl,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (
+                                              context,
+                                              error,
+                                              stackTrace,
+                                            ) {
+                                              return const Icon(
+                                                Icons.fastfood,
+                                                color: Color(0xFF8B4513),
+                                              );
+                                            },
+                                          ),
+                                        )
+                                        : const Icon(
+                                          Icons.fastfood,
+                                          color: Color(0xFF8B4513),
+                                        ),
                               ),
                               const SizedBox(width: 16),
+
+                              // Menu details
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -472,8 +510,18 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                                       ),
                                     ),
                                     const SizedBox(height: 4),
+                                    if (menuItem != null)
+                                      Text(
+                                        menuItem.category,
+                                        style: const TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    const SizedBox(height: 4),
                                     Text(
-                                      '\$${orderItem.price.toStringAsFixed(2)} x ${orderItem.quantity}',
+                                      '${_formatPrice(orderItem.price)} x ${orderItem.quantity}',
                                       style: const TextStyle(
                                         fontFamily: 'Montserrat',
                                         fontSize: 14,
@@ -482,7 +530,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Total: \$${orderItem.totalPrice.toStringAsFixed(2)}',
+                                      'Total: ${_formatPrice(orderItem.totalPrice)}',
                                       style: const TextStyle(
                                         fontFamily: 'Montserrat',
                                         fontSize: 14,
@@ -493,6 +541,8 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                                   ],
                                 ),
                               ),
+
+                              // Quantity controls and delete
                               Column(
                                 children: [
                                   Row(
@@ -612,7 +662,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Total amount
+                    // Total amount card
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
@@ -633,7 +683,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                             ),
                           ),
                           Text(
-                            '\$${totalAmount.toStringAsFixed(2)}',
+                            _formatPrice(totalAmount),
                             style: const TextStyle(
                               fontFamily: 'Montserrat',
                               fontSize: 18,
@@ -646,7 +696,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    // KONFIRMASI DAN KIRIM KE FIRESTORE
+                    // Confirm reservation button
                     CustomButton(
                       text:
                           _isLoading ? 'Processing...' : 'Confirm Reservation',
