@@ -29,12 +29,12 @@ class _HomeScreenState extends State<HomeScreen> {
         context,
         MaterialPageRoute(builder: (context) => const ReservationPage()),
       );
-    } else if (index == 3) {
-      // Navigasi ke halaman history
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const HistoryPage()),
-      );
+      // } else if (index == 3) {
+      //   // Navigasi ke halaman history
+      //   Navigator.push(
+      //     context,
+      //     MaterialPageRoute(builder: (context) => const HistoryPage()),
+      //   );
     } else if (index == 2) {
       Navigator.push(
         context,

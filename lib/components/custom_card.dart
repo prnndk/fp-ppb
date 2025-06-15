@@ -58,9 +58,20 @@ class _MenuCardState extends State<MenuCard> {
             height: 80,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              image: DecorationImage(
-                image: AssetImage(widget.menuItem.imagePath),
+              color: Colors.grey[300],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                widget.menuItem.imageUrl,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(
+                    Icons.broken_image,
+                    color: Colors.grey,
+                    size: 40,
+                  );
+                },
               ),
             ),
           ),
@@ -82,7 +93,7 @@ class _MenuCardState extends State<MenuCard> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  widget.menuItem.description,
+                  widget.menuItem.description ?? 'No description available',
                   style: const TextStyle(
                     fontFamily: 'Montserrat',
                     fontSize: 14,
@@ -94,10 +105,22 @@ class _MenuCardState extends State<MenuCard> {
                 ),
                 const SizedBox(height: 12),
 
-                // Quantity Counter
+                // Price
+                Text(
+                  'Rp ${widget.menuItem.price.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF8B4513),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Counter
                 Row(
                   children: [
-                    // Decrement Button
                     GestureDetector(
                       onTap: _decrementQuantity,
                       child: Container(
@@ -115,7 +138,6 @@ class _MenuCardState extends State<MenuCard> {
                       ),
                     ),
 
-                    // Quantity Display
                     Container(
                       width: 50,
                       height: 32,
@@ -131,7 +153,6 @@ class _MenuCardState extends State<MenuCard> {
                       ),
                     ),
 
-                    // Increment Button
                     GestureDetector(
                       onTap: _incrementQuantity,
                       child: Container(

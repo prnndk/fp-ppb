@@ -8,7 +8,7 @@ class ReviewService {
 
   // Get review for a menu item by current user and reservation
   Stream<Review?> getUserReviewForMenuItem({
-    required String menuId,
+    required int menuId,
     required String reservationId,
   }) {
     final user = FirebaseAuth.instance.currentUser;

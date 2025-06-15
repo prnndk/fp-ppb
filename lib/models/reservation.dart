@@ -48,7 +48,7 @@ class Reservation {
 }
 
 class OrderItem {
-  final String menuId;
+  final int menuId;
   final String menuName;
   final int quantity;
   final double price;
@@ -74,7 +74,7 @@ class OrderItem {
 
   factory OrderItem.fromMap(Map<String, dynamic> map) {
     return OrderItem(
-      menuId: map['menuId'] ?? '',
+      menuId: map['menuId'] ?? 0,
       menuName: map['menuName'] ?? '',
       quantity: map['quantity'] ?? 0,
       price: (map['price'] ?? 0.0).toDouble(),
