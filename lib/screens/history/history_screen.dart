@@ -430,17 +430,17 @@ class _HistoryPageState extends State<HistoryPage> {
                           ),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(16),
-                            // onTap: () {
-                            //   Navigator.push(
-                            //     context,
-                            //     MaterialPageRoute(
-                            //       builder:
-                            //           (context) => DetailTransactionScreen(
-                            //             reservation: reservation,
-                            //           ),
-                            //     ),
-                            //   );
-                            // },
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => DetailTransactionScreen(
+                                        reservation: reservation,
+                                      ),
+                                ),
+                              );
+                            },
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
