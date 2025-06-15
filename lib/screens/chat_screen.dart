@@ -23,6 +23,7 @@ class _ChatPageState extends State<ChatPage> {
 
   String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
+  @override
   void initState() {
     super.initState();
     _loadChatData();
@@ -30,20 +31,12 @@ class _ChatPageState extends State<ChatPage> {
 
   void _loadChatData() {
     setState(() {
+      // dataChatUser = cs.getChatOnlyByDate(DateTime.now(), userId);
       dataChatUser = cs.getChatsByUserId(userId);
-      // Add debugging to see what's being returned
-      dataChatUser
-          .then((chats) {
-            print('Fetched chats: ${chats.length}');
-            print('Chat data: $chats');
-          })
-          .catchError((error) {
-            print('Error fetching chats: $error');
-          });
     });
   }
 
-  void handleSendMessage(String message) {
+  Future<void> handleSendMessage(String message) async {
     if (message.isEmpty) return;
     User? user = us.getCurrentUser();
 
@@ -53,21 +46,51 @@ class _ChatPageState extends State<ChatPage> {
         userId: user.uid,
         question: message,
         createdAt: DateTime.now(),
-        answer: '', // Will be filled after API call
+        answer: '',
       );
 
-      cs.createChat(chat);
+      try {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    strokeWidth: 2,
+                  ),
+                  SizedBox(width: 16),
+                  Text('Sending message...'),
+                ],
+              ),
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
 
-      //success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Message sent: $message'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+        await cs.createChat(chat);
 
-      // Reload chat data to reflect the new message
-      _loadChatData();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Message sent: $message'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+
+        _loadChatData();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error sending message: $e'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
     }
   }
 

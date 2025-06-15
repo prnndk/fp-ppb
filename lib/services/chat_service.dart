@@ -29,6 +29,7 @@ class ChatService {
           await _firestore
               .collection(_collection)
               .where('userId', isEqualTo: userId)
+              .orderBy('createdAt', descending: true)
               .get();
 
       return querySnapshot.docs
@@ -45,8 +46,16 @@ class ChatService {
           await _firestore
               .collection(_collection)
               .where('userId', isEqualTo: userId)
-              .where('createdAt', isGreaterThanOrEqualTo: date)
-              .where('createdAt', isLessThan: date.add(Duration(days: 1)))
+              .where(
+                'createdAt',
+                isGreaterThanOrEqualTo: DateTime(
+                  DateTime.now().year,
+                  DateTime.now().month,
+                  DateTime.now().day,
+                  0,
+                  0,
+                ),
+              )
               .orderBy('createdAt', descending: true)
               .get();
 
