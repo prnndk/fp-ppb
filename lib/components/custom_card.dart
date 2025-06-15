@@ -23,6 +23,11 @@ class MenuCard extends StatelessWidget {
     }
   }
 
+  String _formatPrice(double price) {
+    double rupiahPrice = price * 100;
+    return 'Rp ${rupiahPrice.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -96,7 +101,7 @@ class MenuCard extends StatelessWidget {
 
                 // Price
                 Text(
-                  'Rp ${menuItem.price.toStringAsFixed(0)}',
+                  _formatPrice(menuItem.price),
                   style: const TextStyle(
                     fontFamily: 'Montserrat',
                     fontSize: 16,

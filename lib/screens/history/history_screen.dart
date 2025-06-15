@@ -29,6 +29,11 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
+  String _formatPrice(double price) {
+    double rupiahPrice = price * 100;
+    return 'Rp ${rupiahPrice.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
+  }
+
   Future<void> _deleteReservation(String id) async {
     final bool? shouldDelete = await showDialog<bool>(
       context: context,
@@ -549,7 +554,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                     ),
                                     const Spacer(),
                                     Text(
-                                      'Total: Rp${reservation.totalAmount.toStringAsFixed(0)}',
+                                      _formatPrice(reservation.totalAmount),
                                       style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,

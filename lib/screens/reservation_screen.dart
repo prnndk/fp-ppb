@@ -1,5 +1,6 @@
 import 'package:final_project_ppb/components/custom_card.dart';
 import 'package:final_project_ppb/components/custom_textfield.dart';
+import 'package:final_project_ppb/screens/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:final_project_ppb/components/custom_button.dart';
 import 'package:final_project_ppb/models/menu.dart';
@@ -517,6 +518,90 @@ class _ReservationPageState extends State<ReservationPage> {
     );
   }
 
+  void _showChatActionSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder:
+          (context) => Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Get Menu Recommendation',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF000000),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Chat with our bot to get personalized menu recommendations',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 14,
+                          color: Color(0xFF643F04),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: CustomButton(
+                              text: 'Cancel',
+                              onPressed: () => Navigator.pop(context),
+                              backgroundColor: Colors.grey[300],
+                              textColor: const Color(0xFF643F04),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: CustomButton(
+                              text: 'Start Chat',
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _navigateToChatPage();
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+    );
+  }
+
+  void _navigateToChatPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ChatPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -879,6 +964,47 @@ class _ReservationPageState extends State<ReservationPage> {
                       ),
                   ],
                 ),
+              ),
+            ),
+          ),
+
+          GestureDetector(
+            onTap: _showChatActionSheet,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF8B4513),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: const Column(
+                children: [
+                  Text(
+                    'Not Sure What to Order?',
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Chat with our bot to get menu recommendation',
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 14,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
