@@ -3,10 +3,8 @@ import 'package:final_project_ppb/models/chat.dart';
 import 'package:final_project_ppb/services/chat_service.dart';
 import 'package:final_project_ppb/services/user_service.dart';
 import 'package:final_project_ppb/widgets/ai_messages.dart';
-import 'package:final_project_ppb/widgets/my_messages.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});

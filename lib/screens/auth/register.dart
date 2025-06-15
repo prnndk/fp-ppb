@@ -15,7 +15,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
 
   bool _isLoading = false;
-  String _errorCode = "";
 
   void navigateLogin() {
     if (!context.mounted) return;
@@ -27,10 +26,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     Navigator.pushReplacementNamed(context, 'home');
   }
 
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
   void register() async {
     setState(() {
       _isLoading = true;
-      _errorCode = "";
     });
 
     try {
@@ -40,9 +44,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
       navigateLogin();
     } on FirebaseAuthException catch (e) {
-      setState(() {
-        _errorCode = e.code;
-      });
+      _showError(e.message ?? 'An error occurred');
     }
 
     setState(() {
@@ -104,14 +106,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 isPassword: true,
               ),
               const SizedBox(height: 12),
-              _errorCode != ""
-                  ? Column(
-                    children: [
-                      Text(_errorCode, style: GoogleFonts.montserrat()),
-                      const SizedBox(height: 24),
-                    ],
-                  )
-                  : const SizedBox(height: 0),
               OutlinedButton(
                 onPressed: register,
                 style: OutlinedButton.styleFrom(

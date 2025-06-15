@@ -27,6 +27,12 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.pushReplacementNamed(context, 'home');
   }
 
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
   void signIn() async {
     setState(() {
       _isLoading = true;
@@ -40,9 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       navigateHome();
     } on FirebaseAuthException catch (e) {
-      setState(() {
-        _errorCode = e.code;
-      });
+      _showError(e.message ?? "An error occurred");
     }
 
     setState(() {
@@ -69,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const SizedBox(height: 48),
               Image(
-                image: AssetImage('lib/assets/images/logo.png'),
+                image: AssetImage('lib/assets/images/logo_dine_ease.png'),
                 width: 200,
                 height: 200,
               ),
@@ -104,14 +108,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 isPassword: true,
               ),
               const SizedBox(height: 12),
-              _errorCode != ""
-                  ? Column(
-                    children: [
-                      Text(_errorCode, style: GoogleFonts.montserrat()),
-                      const SizedBox(height: 24),
-                    ],
-                  )
-                  : const SizedBox(height: 0),
               OutlinedButton(
                 onPressed: signIn,
                 style: OutlinedButton.styleFrom(
@@ -121,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   padding: const EdgeInsets.symmetric(
                     vertical: 12.0,
                     horizontal: 24.0,
-                  ), // Add padding
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),
                   ),

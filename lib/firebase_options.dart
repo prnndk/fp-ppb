@@ -65,4 +65,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'final-project-ppb-2a916.firebasestorage.app',
     iosBundleId: 'com.example.finalProjectPpb',
   );
+
 }
