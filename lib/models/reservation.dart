@@ -34,21 +34,39 @@ class Reservation {
     return Reservation(
       id: id,
       reservationDate: (map['reservationDate'] as Timestamp).toDate(),
-      reservationTime: map['reservationTime'] ?? '',
-      numberOfGuests: map['numberOfGuests'] ?? 0,
+      reservationTime: map['reservationTime']?.toString() ?? '',
+      // Fix: Pastikan numberOfGuests selalu int
+      numberOfGuests: _parseInt(map['numberOfGuests']) ?? 0,
       orderItems:
           (map['orderItems'] as List<dynamic>?)
               ?.map((item) => OrderItem.fromMap(item))
               .toList() ??
           [],
-      totalAmount: (map['totalAmount'] ?? 0.0).toDouble(),
+      // Fix: Pastikan totalAmount selalu double
+      totalAmount: _parseDouble(map['totalAmount']) ?? 0.0,
       createdAt: (map['createdAt'] as Timestamp).toDate(),
     );
+  }
+
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
   }
 }
 
 class OrderItem {
-  final String menuId;
+  final int menuId;
   final String menuName;
   final int quantity;
   final double price;
@@ -74,11 +92,31 @@ class OrderItem {
 
   factory OrderItem.fromMap(Map<String, dynamic> map) {
     return OrderItem(
-      menuId: map['menuId'] ?? '',
-      menuName: map['menuName'] ?? '',
-      quantity: map['quantity'] ?? 0,
-      price: (map['price'] ?? 0.0).toDouble(),
-      totalPrice: (map['totalPrice'] ?? 0.0).toDouble(),
+      // Fix: Pastikan menuId selalu int
+      menuId: _parseInt(map['menuId']) ?? 0,
+      menuName: map['menuName']?.toString() ?? '',
+      // Fix: Pastikan quantity selalu int
+      quantity: _parseInt(map['quantity']) ?? 0,
+      // Fix: Pastikan price selalu double
+      price: _parseDouble(map['price']) ?? 0.0,
+      // Fix: Pastikan totalPrice selalu double
+      totalPrice: _parseDouble(map['totalPrice']) ?? 0.0,
     );
+  }
+
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
   }
 }

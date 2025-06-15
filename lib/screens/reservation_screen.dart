@@ -1,11 +1,11 @@
+import 'package:final_project_ppb/components/custom_card.dart';
 import 'package:final_project_ppb/components/custom_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:final_project_ppb/components/custom_button.dart';
-import 'package:final_project_ppb/components/custom_card.dart';
 import 'package:final_project_ppb/models/menu.dart';
 import 'package:final_project_ppb/models/reservation.dart';
+import 'package:final_project_ppb/services/menu_service.dart';
 import 'package:final_project_ppb/screens/orderconfirm_screen.dart';
-import 'package:final_project_ppb/screens/chat_screen.dart';
 import 'package:final_project_ppb/screens/homepage.dart';
 
 class ReservationPage extends StatefulWidget {
@@ -17,82 +17,400 @@ class ReservationPage extends StatefulWidget {
 
 class _ReservationPageState extends State<ReservationPage> {
   final TextEditingController _guestCountController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
+  final MenuService _menuService = MenuService();
 
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   String _timeDisplayText = '';
 
-  //STATIC DATA
-  final List<MenuItem> menuItems = [
-    MenuItem(
-      id: '1',
-      name: 'Burger Bangor',
-      description:
-          'Delicious beef burger with fresh lettuce, tomato, cheese, and our special sauce served with crispy fries',
-      imagePath: 'assets/images/burger1.jpg',
-      price: 15.99,
-    ),
-    MenuItem(
-      id: '2',
-      name: 'Burger GG',
-      description:
-          'Premium double beef patty burger with bacon, caramelized onions, pickles and garlic mayo',
-      imagePath: 'assets/images/burger2.jpg',
-      price: 18.99,
-    ),
-  ];
+  List<MenuItem> menuItems = [];
+  List<MenuItem> allMenuItems = [];
+  List<MenuItem> filteredMenuItems = [];
+  bool _isLoadingMenus = true;
+  String? _errorMessage;
+  // String _selectedCategory = 'All';
 
-  Map<String, int> selectedItems = {};
+  // Pagination state
+  int _currentPage = 1;
+  int _totalPages = 1;
+  bool _isSearchMode = false;
 
-  void _onQuantityChanged(MenuItem item, int quantity) {
+  Map<int, int> selectedItems = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInitialData();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadInitialData() async {
+    try {
+      setState(() {
+        _isLoadingMenus = true;
+        _errorMessage = null;
+      });
+
+      final allMenus = await _menuService.getAllMenus();
+      final menuResponse = await _menuService.getMenus(page: 1);
+
+      setState(() {
+        allMenuItems = allMenus;
+        menuItems = menuResponse.data.data;
+        _totalPages = menuResponse.data.lastPage;
+        _currentPage = 1;
+        _isLoadingMenus = false;
+        _applyFilters();
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoadingMenus = false;
+      });
+    }
+  }
+
+  Future<void> _loadMenus() async {
+    if (_isSearchMode) return;
+    try {
+      setState(() {
+        _isLoadingMenus = true;
+        _errorMessage = null;
+      });
+
+      final menuResponse = await _menuService.getMenus(page: _currentPage);
+
+      setState(() {
+        menuItems = menuResponse.data.data;
+        _totalPages = menuResponse.data.lastPage;
+        _isLoadingMenus = false;
+        // Reset category filter when changing pages to avoid empty results
+        // _selectedCategory = 'All';
+        _applyFilters();
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoadingMenus = false;
+      });
+    }
+  }
+
+  Future<void> _goToPage(int page) async {
+    if (page >= 1 &&
+        page <= _totalPages &&
+        page != _currentPage &&
+        !_isLoadingMenus &&
+        !_isSearchMode) {
+      _currentPage = page;
+      await _loadMenus();
+    }
+  }
+
+  Future<void> _nextPage() async {
+    if (_currentPage < _totalPages && !_isLoadingMenus && !_isSearchMode) {
+      _currentPage++;
+      await _loadMenus();
+    }
+  }
+
+  Future<void> _previousPage() async {
+    if (_currentPage > 1 && !_isLoadingMenus && !_isSearchMode) {
+      _currentPage--;
+      await _loadMenus();
+    }
+  }
+
+  void _onSearchChanged() {
+    _applyFilters();
+  }
+
+  void _applyFilters() {
+    final query = _searchController.text.toLowerCase();
+    List<MenuItem> sourceItems;
+
+    // Buat search
+    bool isSearching = query.isNotEmpty;
     setState(() {
-      if (quantity > 0) {
-        selectedItems[item.id] = quantity;
-      } else {
-        selectedItems.remove(item.id);
-      }
+      _isSearchMode = isSearching;
+    });
+    if (isSearching) {
+      sourceItems = allMenuItems; // Search across all items
+    } else {
+      sourceItems = menuItems; // Use current page items
+    }
+
+    List<MenuItem> filtered = sourceItems;
+
+    // if (_selectedCategory != 'All') {
+    //   filtered =
+    //       filtered.where((menu) => menu.category == _selectedCategory).toList();
+    // }
+
+    // Apply search filter
+    if (query.isNotEmpty) {
+      filtered =
+          filtered.where((menu) {
+            return menu.name.toLowerCase().contains(query) ||
+                menu.category.toLowerCase().contains(query) ||
+                (menu.description?.toLowerCase().contains(query) ?? false);
+          }).toList();
+    }
+
+    setState(() {
+      filteredMenuItems = filtered;
     });
   }
 
-  // DATE PICKER
+  // List<String> get _categories {
+  //   Set<String> categorySet = {'All'};
+
+  //   // Use appropriate data source for categories
+  //   List<MenuItem> sourceItems = _isSearchMode ? allMenuItems : menuItems;
+
+  //   for (var menu in sourceItems) {
+  //     categorySet.add(menu.category);
+  //   }
+  //   return categorySet.toList();
+  // }
+
+  // Get all categories from all menu items (for search mode)
+  // List<String> get _allCategories {
+  //   Set<String> categorySet = {'All'};
+  //   for (var menu in allMenuItems) {
+  //     categorySet.add(menu.category);
+  //   }
+  //   return categorySet.toList();
+  // }
+
+  // Widget _buildCategoryPill(String category) {
+  //   bool isSelected = _selectedCategory == category;
+  //   return GestureDetector(
+  //     onTap: () {
+  //       setState(() {
+  //         _selectedCategory = category;
+  //         _applyFilters();
+  //       });
+  //     },
+  //     child: Container(
+  //       margin: const EdgeInsets.only(right: 8),
+  //       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+  //       decoration: BoxDecoration(
+  //         color: isSelected ? const Color(0xFF8B4513) : Colors.white,
+  //         borderRadius: BorderRadius.circular(25),
+  //         border: Border.all(color: const Color(0xFF8B4513), width: 1),
+  //         boxShadow: [
+  //           BoxShadow(
+  //             color: Colors.black.withOpacity(0.05),
+  //             blurRadius: 4,
+  //             offset: const Offset(0, 2),
+  //           ),
+  //         ],
+  //       ),
+  //       child: Text(
+  //         category,
+  //         style: TextStyle(
+  //           fontFamily: 'Montserrat',
+  //           fontSize: 14,
+  //           fontWeight: FontWeight.w600,
+  //           color: isSelected ? Colors.white : const Color(0xFF8B4513),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  Widget _buildPaginationButtons() {
+    if (_totalPages <= 1 || _isSearchMode) return const SizedBox.shrink();
+
+    List<Widget> buttons = [];
+
+    // Previous button
+    buttons.add(
+      GestureDetector(
+        onTap: _currentPage > 1 ? _previousPage : null,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color:
+                _currentPage > 1 ? const Color(0xFF8B4513) : Colors.grey[300],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            Icons.chevron_left,
+            color: _currentPage > 1 ? Colors.white : Colors.grey[600],
+            size: 20,
+          ),
+        ),
+      ),
+    );
+
+    // Pagination
+    int startPage = (_currentPage - 2).clamp(1, _totalPages);
+    int endPage = (_currentPage + 2).clamp(1, _totalPages);
+
+    for (int i = startPage; i <= endPage; i++) {
+      buttons.add(_buildPageButton(i));
+    }
+
+    if (endPage < _totalPages) {
+      if (endPage < _totalPages - 1) {
+        buttons.add(
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              '...',
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 16,
+                color: Color(0xFF8B4513),
+              ),
+            ),
+          ),
+        );
+      }
+      buttons.add(_buildPageButton(_totalPages));
+    }
+
+    // Next button
+    buttons.add(
+      GestureDetector(
+        onTap: _currentPage < _totalPages ? _nextPage : null,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color:
+                _currentPage < _totalPages
+                    ? const Color(0xFF8B4513)
+                    : Colors.grey[300],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            Icons.chevron_right,
+            color: _currentPage < _totalPages ? Colors.white : Colors.grey[600],
+            size: 20,
+          ),
+        ),
+      ),
+    );
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children:
+            buttons
+                .map(
+                  (button) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: button,
+                  ),
+                )
+                .toList(),
+      ),
+    );
+  }
+
+  Widget _buildPageButton(int pageNumber) {
+    bool isCurrentPage = pageNumber == _currentPage;
+
+    return GestureDetector(
+      onTap: !isCurrentPage ? () => _goToPage(pageNumber) : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isCurrentPage ? const Color(0xFF8B4513) : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isCurrentPage ? const Color(0xFF8B4513) : Colors.grey[300]!,
+            width: 1,
+          ),
+        ),
+        child: Text(
+          pageNumber.toString(),
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: isCurrentPage ? Colors.white : const Color(0xFF8B4513),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Search menu items...',
+          hintStyle: TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 16,
+            color: Colors.grey[500],
+          ),
+          prefixIcon: Icon(Icons.search, color: Colors.grey[500], size: 22),
+          suffixIcon:
+              _searchController.text.isNotEmpty
+                  ? GestureDetector(
+                    onTap: () {
+                      _searchController.clear();
+                    },
+                    child: Icon(Icons.clear, color: Colors.grey[500], size: 20),
+                  )
+                  : null,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(25),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 16,
+          ),
+        ),
+        style: const TextStyle(
+          fontFamily: 'Montserrat',
+          fontSize: 16,
+          color: Color(0xFF000000),
+        ),
+      ),
+    );
+  }
+
   Future<void> _selectDateTime() async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF8B4513),
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Color(0xFF000000),
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (pickedDate != null) {
       final TimeOfDay? pickedTime = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.now(),
-        builder: (context, child) {
-          return Theme(
-            data: Theme.of(context).copyWith(
-              colorScheme: const ColorScheme.light(
-                primary: Color(0xFF8B4513),
-                onPrimary: Colors.white,
-                surface: Colors.white,
-                onSurface: Color(0xFF000000),
-              ),
-            ),
-            child: child!,
-          );
-        },
       );
 
       if (pickedTime != null) {
@@ -106,93 +424,21 @@ class _ReservationPageState extends State<ReservationPage> {
     }
   }
 
-  // CHAT ACTION SHEET
-  void _showChatActionSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder:
-          (context) => Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(top: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      const Text(
-                        'Get Menu Recommendation',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF000000),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Chat with our bot to get personalized menu recommendations',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 14,
-                          color: Color(0xFF643F04),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: CustomButton(
-                              text: 'Cancel',
-                              onPressed: () => Navigator.pop(context),
-                              backgroundColor: Colors.grey[300],
-                              textColor: const Color(0xFF643F04),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: CustomButton(
-                              text: 'Start Chat',
-                              onPressed: () {
-                                Navigator.pop(context);
-                                _navigateToChatPage();
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-    );
+  void _onQuantityChanged(MenuItem item, int quantity) {
+    setState(() {
+      if (quantity > 0) {
+        selectedItems[item.id] = quantity;
+      } else {
+        selectedItems.remove(item.id);
+      }
+    });
   }
 
-  void _navigateToChatPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const ChatPage()),
-    );
+  int _getQuantityForItem(MenuItem item) {
+    return selectedItems[item.id] ?? 0;
   }
 
-  // KONFIRMASI PESANAN HANDLING
-  void _proceedToConfirmation() {
+  void _proceedToOrderConfirmation() {
     if (_selectedDate == null || _selectedTime == null) {
       _showErrorSnackBar('Pilih waktu reservasi terlebih dahulu');
       return;
@@ -214,12 +460,20 @@ class _ReservationPageState extends State<ReservationPage> {
       return;
     }
 
-    // create order
     List<OrderItem> orderItems = [];
     double totalAmount = 0;
 
     for (var entry in selectedItems.entries) {
-      MenuItem menuItem = menuItems.firstWhere((item) => item.id == entry.key);
+      MenuItem? menuItem;
+      try {
+        menuItem = allMenuItems.firstWhere((item) => item.id == entry.key);
+      } catch (e) {
+        _showErrorSnackBar(
+          'Error: Menu item not found. Please refresh the page.',
+        );
+        return;
+      }
+
       int quantity = entry.value;
       double itemTotal = menuItem.price * quantity;
 
@@ -236,7 +490,6 @@ class _ReservationPageState extends State<ReservationPage> {
       totalAmount += itemTotal;
     }
 
-    // reservation object
     Reservation reservation = Reservation(
       reservationDate: _selectedDate!,
       reservationTime: _selectedTime!.format(context),
@@ -246,14 +499,13 @@ class _ReservationPageState extends State<ReservationPage> {
       createdAt: DateTime.now(),
     );
 
-    // KIRIM KE ORDER KONFIRMASI
     Navigator.push(
       context,
       MaterialPageRoute(
         builder:
             (context) => OrderConfirmationPage(
               reservation: reservation,
-              menuItems: menuItems,
+              menuItems: allMenuItems,
             ),
       ),
     );
@@ -271,6 +523,7 @@ class _ReservationPageState extends State<ReservationPage> {
       backgroundColor: const Color(0xFFFFFAEE),
       body: Column(
         children: [
+          // Header Section
           Container(
             height: 197,
             width: double.infinity,
@@ -297,7 +550,6 @@ class _ReservationPageState extends State<ReservationPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Back Button
                       Row(
                         children: [
                           GestureDetector(
@@ -327,7 +579,6 @@ class _ReservationPageState extends State<ReservationPage> {
                         ],
                       ),
                       const Spacer(),
-                      // Restaurant Title
                       const Text(
                         'Chev Au Restaurant',
                         style: TextStyle(
@@ -355,7 +606,7 @@ class _ReservationPageState extends State<ReservationPage> {
             ),
           ),
 
-          // Content Section with Curved Top Border
+          // Content Section
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -367,11 +618,11 @@ class _ReservationPageState extends State<ReservationPage> {
               ),
               transform: Matrix4.translationValues(0, -20, 0),
               child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(16, 30, 16, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Booking Section
                     const Text(
                       'Pemesanan',
                       style: TextStyle(
@@ -470,87 +721,174 @@ class _ReservationPageState extends State<ReservationPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Menu Section
-                    const Text(
-                      'Our Menu',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF643F04),
-                      ),
+                    // Menu Section Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Our Menu',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF643F04),
+                          ),
+                        ),
+                        if (!_isLoadingMenus)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${filteredMenuItems.length} items',
+                                style: const TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 14,
+                                  color: Color(0xFF643F04),
+                                ),
+                              ),
+                              if (!_isSearchMode)
+                                Text(
+                                  'Page $_currentPage of $_totalPages',
+                                  style: const TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 12,
+                                    color: Color(0xFF8B4513),
+                                  ),
+                                ),
+                              if (_isSearchMode)
+                                const Text(
+                                  'Search Results',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 12,
+                                    color: Color(0xFF8B4513),
+                                  ),
+                                ),
+                            ],
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 16),
+
+                    // Search Bar
+                    _buildSearchBar(),
+                    const SizedBox(height: 16),
+
+                    // if (!_isLoadingMenus &&
+                    //     (_isSearchMode
+                    //         ? allMenuItems.isNotEmpty
+                    //         : menuItems.isNotEmpty)) ...[
+                    //   SingleChildScrollView(
+                    //     scrollDirection: Axis.horizontal,
+                    //     child: Row(
+                    //       children:
+                    //           _categories.map(_buildCategoryPill).toList(),
+                    //     ),
+                    //   ),
+                    //   const SizedBox(height: 20),
+                    // ],
 
                     // Menu Items
-                    ...menuItems.map(
-                      (item) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: MenuCard(
-                          menuItem: item,
-                          onQuantityChanged: _onQuantityChanged,
+                    if (_isLoadingMenus)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(32.0),
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF8B4513),
+                          ),
                         ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Confirm Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: CustomButton(
-                        text: 'Konfirmasi Pemesanan',
-                        onPressed: _proceedToConfirmation,
-                        height: 56,
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Chatbot Section
-                    GestureDetector(
-                      onTap: _showChatActionSheet,
-                      child: Container(
+                      )
+                    else if (_errorMessage != null)
+                      Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF8B4513),
+                          color: Colors.red[50],
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
+                          border: Border.all(color: Colors.red[200]!),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red[600],
+                              size: 48,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Failed to load menu',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.red[700],
+                              ),
                             ),
                           ],
                         ),
-                        child: const Column(
+                      )
+                    else if (filteredMenuItems.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
                           children: [
+                            Icon(
+                              Icons.search_off,
+                              color: Colors.grey[400],
+                              size: 64,
+                            ),
+                            const SizedBox(height: 16),
                             Text(
-                              'Not Sure What to Order?',
+                              'No menu items found',
                               style: TextStyle(
                                 fontFamily: 'Montserrat',
                                 fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[600],
                               ),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 8),
                             Text(
-                              'Chat with our bot to get menu recommendation',
+                              'Try adjusting your search or filter',
                               style: TextStyle(
                                 fontFamily: 'Montserrat',
                                 fontSize: 14,
-                                color: Colors.white70,
+                                color: Colors.grey[500],
                               ),
                             ),
                           ],
                         ),
+                      )
+                    else
+                      Column(
+                        children: [
+                          ...filteredMenuItems.map((menuItem) {
+                            return MenuCard(
+                              menuItem: menuItem,
+                              onQuantityChanged: _onQuantityChanged,
+                              currentQuantity: _getQuantityForItem(
+                                menuItem,
+                              ), // Pass the current quantity
+                            );
+                          }).toList(),
+
+                          // Pagination buttons (only show when not in search mode)
+                          _buildPaginationButtons(),
+                        ],
                       ),
-                    ),
                   ],
                 ),
               ),
+            ),
+          ),
+
+          // Button Section
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: CustomButton(
+              text: 'Lanjutkan ke Konfirmasi Pesanan',
+              onPressed: _proceedToOrderConfirmation,
             ),
           ),
         ],
