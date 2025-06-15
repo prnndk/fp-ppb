@@ -48,7 +48,7 @@ class Reservation {
 }
 
 class OrderItem {
-  final int menuId;
+  final int menuId; // sesuain sama api
   final String menuName;
   final int quantity;
   final double price;

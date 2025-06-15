@@ -1,36 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:final_project_ppb/models/menu.dart';
 
-class MenuCard extends StatefulWidget {
+class MenuCard extends StatelessWidget {
   final MenuItem menuItem;
   final Function(MenuItem, int) onQuantityChanged;
+  final int currentQuantity;
 
   const MenuCard({
     super.key,
     required this.menuItem,
     required this.onQuantityChanged,
+    required this.currentQuantity,
   });
 
-  @override
-  State<MenuCard> createState() => _MenuCardState();
-}
-
-class _MenuCardState extends State<MenuCard> {
-  int quantity = 0;
-
   void _incrementQuantity() {
-    setState(() {
-      quantity++;
-    });
-    widget.onQuantityChanged(widget.menuItem, quantity);
+    onQuantityChanged(menuItem, currentQuantity + 1);
   }
 
   void _decrementQuantity() {
-    if (quantity > 0) {
-      setState(() {
-        quantity--;
-      });
-      widget.onQuantityChanged(widget.menuItem, quantity);
+    if (currentQuantity > 0) {
+      onQuantityChanged(menuItem, currentQuantity - 1);
     }
   }
 
@@ -63,7 +52,7 @@ class _MenuCardState extends State<MenuCard> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
-                widget.menuItem.imageUrl,
+                menuItem.imageUrl,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return const Icon(
@@ -83,7 +72,7 @@ class _MenuCardState extends State<MenuCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.menuItem.name,
+                  menuItem.name,
                   style: const TextStyle(
                     fontFamily: 'Montserrat',
                     fontSize: 18,
@@ -93,7 +82,7 @@ class _MenuCardState extends State<MenuCard> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  widget.menuItem.description ?? 'No description available',
+                  menuItem.description ?? 'No description available',
                   style: const TextStyle(
                     fontFamily: 'Montserrat',
                     fontSize: 14,
@@ -107,7 +96,7 @@ class _MenuCardState extends State<MenuCard> {
 
                 // Price
                 Text(
-                  'Rp ${widget.menuItem.price.toStringAsFixed(0)}',
+                  'Rp ${menuItem.price.toStringAsFixed(0)}',
                   style: const TextStyle(
                     fontFamily: 'Montserrat',
                     fontSize: 16,
@@ -143,7 +132,8 @@ class _MenuCardState extends State<MenuCard> {
                       height: 32,
                       alignment: Alignment.center,
                       child: Text(
-                        quantity.toString(),
+                        currentQuantity
+                            .toString(), // Use currentQuantity instead of local state
                         style: const TextStyle(
                           fontFamily: 'Montserrat',
                           fontSize: 16,
