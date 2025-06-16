@@ -198,6 +198,22 @@ class _UserPreferenceScreen extends State<UserPreferenceScreen> {
     );
   }
 
+  void _markAsEdited(String section) {
+    setState(() {
+      switch (section) {
+        case 'halal':
+          _isEditedHalal = true;
+          break;
+        case 'lactose':
+          _isEditedLactose = true;
+          break;
+        case 'vegetarian':
+          _isEditedVegetarian = true;
+          break;
+      }
+    });
+  }
+
   void _triggerDelete() {
     showModalBottomSheet(
       context: context,
@@ -410,7 +426,7 @@ class _UserPreferenceScreen extends State<UserPreferenceScreen> {
                       card.selected = allergiesList.contains(card.value);
                     }
 
-                    if (!_isEditingHalal || !_isEditedHalal) {
+                    if (!_isEditedHalal) {
                       int halalIndex = halal.indexWhere(
                         (e) => (e as Text).data == preferensi.seafoodPreference,
                       );
@@ -419,7 +435,7 @@ class _UserPreferenceScreen extends State<UserPreferenceScreen> {
                       }
                     }
 
-                    if (!_isEditingLactose || !_isEditedLactose) {
+                    if (!_isEditedLactose) {
                       int lactoseIndex = lactose.indexWhere(
                         (e) => (e as Text).data == preferensi.lactosePreference,
                       );
@@ -428,7 +444,7 @@ class _UserPreferenceScreen extends State<UserPreferenceScreen> {
                       }
                     }
 
-                    if (!_isEditingVegetarian || !_isEditedVegetarian) {
+                    if (!_isEditedVegetarian) {
                       int vegetarianIndex = vegetarian.indexWhere(
                         (e) =>
                             (e as Text).data == preferensi.vegetarianPreference,
@@ -647,15 +663,19 @@ class _UserPreferenceScreen extends State<UserPreferenceScreen> {
                     onPressed: (int index) {
                       setState(() {
                         for (int i = 0; i < selectedValues.length; i++) {
-                          if (i == index && !selectedValues[i]) {
-                            selectedValues[i] = true;
-                            isEdited = true;
-                          } else {
-                            selectedValues[i] = false;
-                          }
+                          selectedValues[i] = i == index;
                         }
                       });
+
+                      if (title.contains('Halal')) {
+                        _markAsEdited('halal');
+                      } else if (title.contains('Vegetarian')) {
+                        _markAsEdited('vegetarian');
+                      } else {
+                        _markAsEdited('lactose');
+                      }
                     },
+
                     borderRadius: const BorderRadius.all(Radius.circular(8)),
                     selectedBorderColor:
                         isEditing
