@@ -150,6 +150,7 @@ class _ChatPageState extends State<ChatPage> {
                               ),
                               isSender: true,
                             ),
+
                             AiMessages(message: chat.answer ?? ''),
                           ],
                         ),

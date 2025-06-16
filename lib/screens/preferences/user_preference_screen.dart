@@ -67,6 +67,14 @@ class _UserPreferenceScreen extends State<UserPreferenceScreen> {
 
   late Future<Preferensi?> dataUser;
 
+  bool _isEditingHalal = false;
+  bool _isEditingLactose = false;
+  bool _isEditingVegetarian = false;
+
+  bool _isEditedHalal = false;
+  bool _isEditedLactose = false;
+  bool _isEditedVegetarian = false;
+
   UserService us = UserService();
   PreferencesService ps = PreferencesService();
 
@@ -90,6 +98,12 @@ class _UserPreferenceScreen extends State<UserPreferenceScreen> {
     } else {
       _createPreferences();
     }
+  }
+
+  void _loadPreferences() {
+    setState(() {
+      dataUser = ps.getPreferensiByUserId(us.getCurrentUser()?.uid ?? '');
+    });
   }
 
   void _updatePreferences() async {
@@ -157,10 +171,105 @@ class _UserPreferenceScreen extends State<UserPreferenceScreen> {
       ),
     );
 
-    // refresh the data
-    setState(() {
-      dataUser = ps.getPreferensiByUserId(us.getCurrentUser()?.uid ?? '');
-    });
+    _loadPreferences();
+  }
+
+  void _processDeletion() async {
+    Preferensi? currentPreference = await dataUser;
+
+    if (currentPreference == null) {
+      _showErrorSnackBar("No existing preferences found to delete");
+      return;
+    }
+
+    await ps.deletePreferensi(currentPreference.id, currentPreference.userId);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Preferensi berhasil dihapus'),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    // go back to home screen
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+    );
+  }
+
+  void _triggerDelete() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(top: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade400,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    const Text(
+                      'Hapus Preferensi Pengguna',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF643F04),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Apakah Anda yakin ingin menghapus preferensi pengguna? Tindakan ini tidak dapat dibatalkan.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 16,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Close the modal
+                        _processDeletion();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text(
+                        'Hapus Preferensi',
+                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _proceedPreferences() {
@@ -184,13 +293,13 @@ class _UserPreferenceScreen extends State<UserPreferenceScreen> {
             actions: [
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog and stay on page
+                  Navigator.of(context).pop();
                 },
                 child: const Text('Batal'),
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
+                  Navigator.of(context).pop();
                   continueProcess();
                 },
                 child: const Text('Ya, Lanjutkan'),
@@ -293,7 +402,6 @@ class _UserPreferenceScreen extends State<UserPreferenceScreen> {
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 } else {
-                  // Process the data if available
                   if (snapshot.hasData && snapshot.data != null) {
                     final preferensi = snapshot.data!;
                     final allergiesList = preferensi.allergies;
@@ -302,27 +410,36 @@ class _UserPreferenceScreen extends State<UserPreferenceScreen> {
                       card.selected = allergiesList.contains(card.value);
                     }
 
-                    _selectedHalal[halal.indexWhere(
-                          (e) =>
-                              (e as Text).data == preferensi.seafoodPreference,
-                        )] =
-                        true;
-                    _selectedLactose[lactose.indexWhere(
-                          (e) =>
-                              (e as Text).data == preferensi.lactosePreference,
-                        )] =
-                        true;
-                    _selectedVegetarian[vegetarian.indexWhere(
-                          (e) =>
-                              (e as Text).data ==
-                              preferensi.vegetarianPreference,
-                        )] =
-                        true;
-                  }
+                    if (!_isEditingHalal || !_isEditedHalal) {
+                      int halalIndex = halal.indexWhere(
+                        (e) => (e as Text).data == preferensi.seafoodPreference,
+                      );
+                      if (halalIndex != -1) {
+                        _selectedHalal[halalIndex] = true;
+                      }
+                    }
 
+                    if (!_isEditingLactose || !_isEditedLactose) {
+                      int lactoseIndex = lactose.indexWhere(
+                        (e) => (e as Text).data == preferensi.lactosePreference,
+                      );
+                      if (lactoseIndex != -1) {
+                        _selectedLactose[lactoseIndex] = true;
+                      }
+                    }
+
+                    if (!_isEditingVegetarian || !_isEditedVegetarian) {
+                      int vegetarianIndex = vegetarian.indexWhere(
+                        (e) =>
+                            (e as Text).data == preferensi.vegetarianPreference,
+                      );
+                      if (vegetarianIndex != -1) {
+                        _selectedVegetarian[vegetarianIndex] = true;
+                      }
+                    }
+                  }
                   noteTextController.text = snapshot.data?.note ?? '';
 
-                  // Always return the preferences UI
                   return Container(
                     height: MediaQuery.of(context).size.height,
                     decoration: const BoxDecoration(
@@ -338,32 +455,48 @@ class _UserPreferenceScreen extends State<UserPreferenceScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Data Pengguna',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 24,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF643F04),
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Data Pengguna',
+                                style: TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF643F04),
+                                ),
+                              ),
+                              if (snapshot.hasData && snapshot.data != null)
+                                IconButton(
+                                  onPressed: () {
+                                    _triggerDelete();
+                                  },
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Color(0xFF643F04),
+                                  ),
+                                ),
+                            ],
                           ),
                           const SizedBox(height: 16),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const SizedBox(height: 16),
-                              // Your preferences UI here
                               preferenceSection(
                                 'Preferensi Halal',
                                 halal,
                                 _selectedHalal,
                                 theme,
+                                isEdited: _isEditedHalal,
                               ),
                               preferenceSection(
                                 'Preferensi Vegetarian',
                                 vegetarian,
                                 _selectedVegetarian,
                                 theme,
+                                isEdited: _isEditedVegetarian,
                               ),
                               preferenceSection(
                                 'Preferensi Laktosa dan Gluten',
@@ -371,6 +504,7 @@ class _UserPreferenceScreen extends State<UserPreferenceScreen> {
                                 _selectedLactose,
                                 theme,
                                 vertical: true,
+                                isEdited: _isEditedLactose,
                               ),
                               const SizedBox(height: 32),
 
@@ -459,7 +593,22 @@ class _UserPreferenceScreen extends State<UserPreferenceScreen> {
     List<bool> selectedValues,
     ThemeData theme, {
     bool vertical = false,
+    bool isEdited = false,
   }) {
+    bool isEditing;
+    Function(bool) updateIsEditing;
+
+    if (title.contains('Halal')) {
+      isEditing = _isEditingHalal;
+      updateIsEditing = (value) => setState(() => _isEditingHalal = value);
+    } else if (title.contains('Vegetarian')) {
+      isEditing = _isEditingVegetarian;
+      updateIsEditing = (value) => setState(() => _isEditingVegetarian = value);
+    } else {
+      isEditing = _isEditingLactose;
+      updateIsEditing = (value) => setState(() => _isEditingLactose = value);
+    }
+
     return Center(
       child: SizedBox(
         width: double.infinity,
@@ -467,36 +616,62 @@ class _UserPreferenceScreen extends State<UserPreferenceScreen> {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              title,
-              style: theme.textTheme.titleSmall,
-              textAlign: TextAlign.center,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleSmall,
+                  textAlign: TextAlign.center,
+                ),
+                IconButton(
+                  icon: Icon(
+                    isEditing ? Icons.check : Icons.edit,
+                    size: 18,
+                    color: const Color(0xFF643F04),
+                  ),
+                  onPressed: () {
+                    updateIsEditing(!isEditing);
+                  },
+                ),
+              ],
             ),
             const SizedBox(height: 5),
             SizedBox(
               width: double.infinity,
               child: Center(
-                child: ToggleButtons(
-                  direction: vertical ? Axis.vertical : Axis.horizontal,
-                  onPressed: (int index) {
-                    setState(() {
-                      for (int i = 0; i < selectedValues.length; i++) {
-                        selectedValues[i] = i == index;
-                      }
-                    });
-                  },
-                  borderRadius: const BorderRadius.all(Radius.circular(8)),
-                  selectedBorderColor: Colors.grey.shade400,
-                  borderColor: Colors.grey.shade400,
-                  selectedColor: Colors.white,
-                  fillColor: const Color(0xFF643F04),
-                  color: Colors.black87,
-                  constraints: BoxConstraints(
-                    minHeight: 40.0,
-                    minWidth: vertical ? 250.0 : 120.0,
+                child: AbsorbPointer(
+                  absorbing: !isEditing,
+                  child: ToggleButtons(
+                    direction: vertical ? Axis.vertical : Axis.horizontal,
+                    onPressed: (int index) {
+                      setState(() {
+                        for (int i = 0; i < selectedValues.length; i++) {
+                          if (i == index && !selectedValues[i]) {
+                            selectedValues[i] = true;
+                            isEdited = true;
+                          } else {
+                            selectedValues[i] = false;
+                          }
+                        }
+                      });
+                    },
+                    borderRadius: const BorderRadius.all(Radius.circular(8)),
+                    selectedBorderColor:
+                        isEditing
+                            ? Colors.grey.shade400
+                            : const Color(0xFF643F04),
+                    borderColor: Colors.grey.shade400,
+                    selectedColor: Colors.white,
+                    fillColor: const Color(0xFF643F04),
+                    color: isEditing ? Colors.black87 : Colors.black54,
+                    constraints: BoxConstraints(
+                      minHeight: 40.0,
+                      minWidth: vertical ? 250.0 : 120.0,
+                    ),
+                    isSelected: selectedValues,
+                    children: options,
                   ),
-                  isSelected: selectedValues,
-                  children: options,
                 ),
               ),
             ),
