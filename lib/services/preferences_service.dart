@@ -72,4 +72,14 @@ class PreferencesService {
       throw Exception('Failed to update preferences: $e');
     }
   }
+
+  Future<void> deletePreferensi(String id, String userId) async {
+    try {
+      await ApiService.deletePreferensi(userId);
+
+      await _firestore.collection(_collection).doc(id).delete();
+    } catch (e) {
+      throw Exception('Failed to delete preferences: $e');
+    }
+  }
 }

@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   static const String _baseUrl =
-      'http://10.21.85.121:8000'; // Replace with your API URL
+      'https://fp-ppb.aryagading.com'; // Replace with your API URL
 
   static Future<PreferensiResponse?> postPreferensi(
     PreferensiRequest preferensiRequest,
@@ -58,6 +58,28 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Failed to ask question: $e');
+    }
+  }
+
+  static Future<String> deletePreferensi(String userId) async {
+    try {
+      final headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      };
+
+      final response = await http.delete(
+        Uri.parse('$_baseUrl/api/preference/$userId'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        return 'Preferensi deleted successfully';
+      } else {
+        throw Exception('Failed with status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Failed to delete preferensi: $e');
     }
   }
 }
