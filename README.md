@@ -28,6 +28,9 @@ Aplikasi ini merupakan aplikasi reservasi makanan pada restoran dengan menggunak
 - Pengguna dapat mengubah jumlah makanan yang dipesan.
 - Pengguna dapat menentukan berapa orang yang akan ikut.
 
+<img src="docs/reservation_page.png" alt="screenshoot-user-preference" width="400"/>
+<img src="docs/orderconfirmation_page.png" alt="screenshoot-user-preference" width="400"/>
+
 ### Preferensi Makanan (Arya Gading Prinandika)
 
 - Pengguna dapat memilih preferensi makanan seperti halal, vegetarian, dan lainnya.
