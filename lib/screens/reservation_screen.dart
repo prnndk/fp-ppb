@@ -971,7 +971,7 @@ class _ReservationPageState extends State<ReservationPage> {
           GestureDetector(
             onTap: _showChatActionSheet,
             child: Container(
-              width: double.infinity,
+              width: null,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: const Color(0xFF8B4513),
