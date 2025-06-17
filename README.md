@@ -43,6 +43,8 @@ Aplikasi ini merupakan aplikasi reservasi makanan pada restoran dengan menggunak
 - Pengguna dapat memberikan review terhadap transaksi yang telah dilakukan.
 - Review akan ditampilkan pada halaman detail makanan.
 
+  <img src="docs\review_page.png" alt="screenshoot-user-preference" width="400"/>
+
 ### Rekomendasi Makanan melalui Chatbot AI (Arya Gading Prinandika)
 
 - Pengguna dapat berinteraksi dengan chatbot AI untuk mendapatkan rekomendasi makanan.
