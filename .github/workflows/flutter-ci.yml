@@ -18,7 +18,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0' # sesuaikan dengan versimu
+          flutter-version: '3.32.4.'
 
       - name: Install dependencies
         run: flutter pub get
